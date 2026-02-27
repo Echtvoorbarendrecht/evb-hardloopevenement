@@ -129,6 +129,36 @@
       opacity:.75;
       line-height:1.4;
     }
+
+    /* Gesloten-melding */
+    .closed-notice{
+      padding:28px 24px;
+      text-align:center;
+      line-height:1.7;
+    }
+    .closed-notice .closed-icon{
+      font-size:48px;
+      margin-bottom:12px;
+    }
+    .closed-notice h2{
+      font-size:20px;
+      margin-bottom:16px;
+      color:var(--evb-black);
+    }
+    .closed-notice p{
+      margin:0 0 8px;
+      font-size:15px;
+    }
+    .closed-notice .highlight{
+      display:inline-block;
+      margin-top:12px;
+      padding:10px 16px;
+      border-radius:12px;
+      background:rgba(243,173,45,.18);
+      border:1px solid rgba(243,173,45,.5);
+      font-weight:700;
+      font-size:14px;
+    }
   </style>
 </head>
 
@@ -168,7 +198,8 @@
       </footer>
     </div>
 
-    <div class="card">
+    <!-- ===== INSCHRIJFFORMULIER (zichtbaar vóór deadline) ===== -->
+    <div class="card" id="formCard">
       <h2>Inschrijven</h2>
 
       <form id="form" novalidate>
@@ -223,6 +254,17 @@
       </form>
     </div>
 
+    <!-- ===== GESLOTEN-MELDING (zichtbaar ná deadline) ===== -->
+    <div class="card" id="closedCard" style="display:none;">
+      <div class="closed-notice">
+        <div class="closed-icon">🔒</div>
+        <h2>Inschrijving gesloten</h2>
+        <p>De online inschrijving voor het EVB Loop mee-evenement is gesloten.</p>
+        <p>Wil je toch graag deelnemen, dan kun je je op <strong>zaterdag 28 februari</strong> alsnog inschrijven op locatie bij De Kleine Duiker.</p>
+        <span class="highlight">💳 Betaling van het inschrijfgeld kan uitsluitend per pin.</span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -232,8 +274,32 @@
   const PAY_URL_ADULT   = "https://HIER-JE-5-00-BETAALLINK";
 
   const EVENT_DATE = new Date("2026-02-28T00:00:00");
+
+  /* ──────────────────────────────────────────────
+     DEADLINE: vrijdag 27 februari 2026 om 18:00
+     ────────────────────────────────────────────── */
+  const DEADLINE = new Date("2026-02-27T18:00:00");
+
   const $ = id => document.getElementById(id);
 
+  /* Controleer of de deadline verstreken is */
+  function checkDeadline(){
+    const now = new Date();
+    if(now >= DEADLINE){
+      $("formCard").style.display  = "none";
+      $("closedCard").style.display = "block";
+      return true;
+    }
+    return false;
+  }
+
+  /* Bij laden direct controleren */
+  checkDeadline();
+
+  /* Elke 30 seconden opnieuw controleren (voor wie de pagina open heeft staan) */
+  setInterval(checkDeadline, 30000);
+
+  /* ── Prijs-berekening ── */
   function ageOnEvent(d){
     let age = EVENT_DATE.getFullYear() - d.getFullYear();
     const m = EVENT_DATE.getMonth() - d.getMonth();
@@ -255,6 +321,9 @@
   $("form").addEventListener("submit", e=>{
     e.preventDefault();
     $("error").textContent="";
+
+    /* Dubbele check bij indienen */
+    if(checkDeadline()) return;
 
     if(!$("distance").value || !$("name").value || !$("dob").value || !$("city").value || !$("email").value || !$("email2").value){
       $("error").textContent="Vul alle velden in.";
